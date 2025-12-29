@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+body {
+  /* padding: 10px; */
+  background-color: rgb(220, 220, 220);
+  height: 100vh;
+}
+
+#app {
+  padding: 2rem;
+  height: 100%;
+}
