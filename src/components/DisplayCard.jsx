@@ -6,25 +6,25 @@ export default function DisplayCard({
   selectedCards,
   action,
   gameState,
-  cardString = "",
+  cardString = "", // cosmetic, do not use in logic
 }) {
-  const hasSelectedCards = selectedCards.size > 0;
+  const sc = [...selectedCards];
 
   const handleClick = () => {
-    if (hasSelectedCards) {
-      const actions = [...getActions(gameState)];
+    if (sc.length <= 0) return;
 
-      const relevantAction = actions.find((a) => a.type === action);
+    const actions = [...getActions(gameState)];
+    const relevantAction = actions.find((a) => a.type === action);
 
-      console.log("relevant action: ", relevantAction);
+    if (relevantAction) {
+      let multiselect = false;
+      if (sc.length > 1) multiselect = true;
 
-      if (relevantAction) {
-        doAction(
-          { type: action, cards: relevantAction.cards },
-          cardString,
-          gameState,
-        );
-      }
+      doAction(
+        { type: action, cards: relevantAction.cards },
+        multiselect ? sc.join("+") : sc,
+        gameState,
+      );
     }
   };
 
@@ -34,7 +34,7 @@ export default function DisplayCard({
       onClick={handleClick}
       class={
         "rounded-lg h-full shadow-md " +
-        (hasSelectedCards ? "cursor-pointer " : "")
+        (sc.length > 0 ? "cursor-pointer " : "")
       }
     >
       {cardString}

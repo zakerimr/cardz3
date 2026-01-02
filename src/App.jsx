@@ -6,12 +6,14 @@ import PlayableCard from "./components/PlayableCard";
 import DisplayCard from "./components/DisplayCard";
 
 import "./style.css";
+import { getActions } from "./engine/action";
 
 export function App() {
+  // gso = Game state object
+
   const [gameState, setGameState] = useState(setupGame());
 
   // () => new Set() is a lazy initializer. Used to avoid creating a new Set on every render.
-
   const [selectedCards, setSelectedCards] = useState(() => new Set());
 
   /**
@@ -30,6 +32,8 @@ export function App() {
       return next;
     });
   };
+
+  console.log(getActions(gameState));
 
   return (
     <div class="flex flex-col h-full justify-between">

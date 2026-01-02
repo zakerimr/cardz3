@@ -33,6 +33,10 @@ const removeFromHand = (card, gameState) => {
   }
 };
 
+/**
+ * Removes the topmost card from the player's tower.
+ * @param {stateObj} gameState - The gameState object.
+ */
 const removeFromTower = (gameState) => {
   gameState.tower.pop();
 };
@@ -56,9 +60,11 @@ const replaceEnemyCard = (gameState) => {
  * @param {stateObj} gameState - The gameState object containing playerDeck, enemyCard, etc.
  */
 export const doAction = (action, card, gameState) => {
+  let eligibleCards = action.cards;
+
   switch (action.type) {
     case "BUILD": {
-      if (getValue(card) <= getValue(gameState.tower.at(-1))) {
+      if (!eligibleCards || !eligibleCards.includes(card)) {
         console.log(`Cannot build ${card} - tower must be ascending!`);
       } else {
         console.log(`Built card ${card}`);
@@ -69,9 +75,7 @@ export const doAction = (action, card, gameState) => {
     }
 
     case "SWAP": {
-      let swappableCards = action.cards;
-
-      if (!swappableCards || !swappableCards.includes(card)) {
+      if (!eligibleCards || !eligibleCards.includes(card)) {
         console.log("Could not swap this card!");
       } else {
         console.log(`Swapped card ${card}.`);
@@ -83,7 +87,6 @@ export const doAction = (action, card, gameState) => {
 
     case "KILL": {
       let topTower = gameState.tower.at(-1);
-      let eligibleCards = action.cards;
 
       if (!eligibleCards || !eligibleCards.includes(card)) {
         console.log(`Could not kill enemy ${gameState.enemyCard} with ${card}`);
@@ -202,7 +205,6 @@ export const getActions = (gameState) => {
   const stringifiedCombos = combos.map((c) => c.join("+"));
 
   const killOptions = eligibleCards.concat(stringifiedCombos);
-  console.log(`Kill options: ${killOptions}`);
 
   if (killOptions.length > 0) {
     actions.add({ type: "KILL", cards: killOptions });
