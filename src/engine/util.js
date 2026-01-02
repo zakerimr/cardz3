@@ -50,7 +50,6 @@ export const getColor = (card) => {
 
 /**
  * Shuffles an array using the Fisher-Yates algorithm.
- * The previous shuffle algorithm was a naïve algorithm, see: https://blog.codinghorror.com/the-danger-of-naivete/
  * @param {Array} arr - The array to be shuffled.
  * @returns {Array} - A copy of the shuffled array.
  */
@@ -65,7 +64,7 @@ export const shuffleArray = (arr) => {
 
 /**
  * Gets all subsets of size >= 2 of an array using a backtracking algorithm.
- * For further explanation of the algorithm, see: https://www.geeksforgeeks.org/dsa/backtracking-algorithms/
+ * https://www.geeksforgeeks.org/dsa/backtracking-algorithms/
  * Example trace:
  *  ['9S', '7S', '5S']
  *   ├─ 9S

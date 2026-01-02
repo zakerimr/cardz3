@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { useState } from "preact/hooks";
-import { setupGame } from "./game";
+import { setupGame } from "./engine/game";
 
 import PlayableCard from "./components/PlayableCard";
 import DisplayCard from "./components/DisplayCard";
@@ -10,9 +10,14 @@ import "./style.css";
 export function App() {
   const [gameState, setGameState] = useState(setupGame());
 
-  // () => new Set() is a lazy initializer. It is used to avoid creating a new Set on every render.
+  // () => new Set() is a lazy initializer. Used to avoid creating a new Set on every render.
+
   const [selectedCards, setSelectedCards] = useState(() => new Set());
 
+  /**
+   * Store cards that have been multi-selected
+   * @param {string} cardString
+   */
   const toggleSelected = (cardString) => {
     // Pass our setter an updater function
     setSelectedCards((prev) => {
@@ -34,12 +39,14 @@ export function App() {
           faceUp={true}
           cardString={gameState.enemyCard}
           selectedCards={selectedCards}
+          gameState={gameState}
           action="KILL"
         />
         <DisplayCard
           key={"enemyDeckDummy"}
           faceUp={false}
           selectedCards={selectedCards}
+          gameState={gameState}
           action="SWAP"
         />
       </div>
@@ -51,6 +58,7 @@ export function App() {
             faceUp={true}
             cardString="AS"
             selectedCards={selectedCards}
+            gameState={gameState}
             action="BUILD"
           />
         </div>
@@ -75,6 +83,7 @@ export function App() {
             key={"playerDeckDummy"}
             faceUp={false}
             selectedCards={selectedCards}
+            gameState={gameState}
             action="DRAW"
           />
         </div>

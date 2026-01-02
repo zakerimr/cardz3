@@ -1,4 +1,3 @@
-import { useState } from "preact/hooks";
 import { getImgFromCardString } from "../ui/util";
 
 export default function PlayableCard({

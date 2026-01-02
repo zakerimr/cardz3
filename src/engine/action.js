@@ -51,7 +51,7 @@ const replaceEnemyCard = (gameState) => {
  * Performs a player action using player's card and the current gameState object.
  * If the action is valid, directly mutates the gameState object.
  * If the action is invalid, returns an informative console.log.
- * @param {actionObj} action - The action in all caps, e.g., 'BUILD', 'KILL'
+ * @param {actionObj} action - The action object, e.g. {type: 'BUILD', cards: ['2D', KH']
  * @param {string} card - The two-character card descriptor, e.g., 'TH', '8S'
  * @param {stateObj} gameState - The gameState object containing playerDeck, enemyCard, etc.
  */

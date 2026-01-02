@@ -1,18 +1,30 @@
-import { useState } from "preact/hooks";
-
 import { getImgFromCardString } from "../ui/util";
+import { doAction, getActions } from "../engine/action";
 
 export default function DisplayCard({
   faceUp,
   selectedCards,
   action,
+  gameState,
   cardString = "",
 }) {
   const hasSelectedCards = selectedCards.size > 0;
 
   const handleClick = () => {
     if (hasSelectedCards) {
-      console.log(action);
+      const actions = [...getActions(gameState)];
+
+      const relevantAction = actions.find((a) => a.type === action);
+
+      console.log("relevant action: ", relevantAction);
+
+      if (relevantAction) {
+        doAction(
+          { type: action, cards: relevantAction.cards },
+          cardString,
+          gameState,
+        );
+      }
     }
   };
 
