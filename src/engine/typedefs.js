@@ -13,10 +13,17 @@
  */
 
 /**
+ * Object describing a combination of playable cards, e.g. { singles: [...], combos: [[...], [...]] }
+ * @typedef {object | null} optionSet
+ * @property {Array<string>} singles - Array describing a single-card option, e.g. ['JH', 'KH']
+ * @property {Array<Array<string>>} combos - Array describing combo options, e.g. [['2D', '3D'], ['AS', 'KC']]
+ */
+
+/**
  * Object describing an action and its playable card set.
  * @typedef {object} actionObj
  * @property {"BUILD" | "SWAP" | "KILL" | "DRAW" | "NUKE"} type - Type of action.
- * @property {Array<string>} cards - The cards in the player's hand eligible to be performed with the action.
+ * @property {optionSet} opts - Object describing the combination of playable cards (singles & combos).
  */
 
 export {};

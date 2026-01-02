@@ -67,7 +67,10 @@ export function App() {
           />
         </div>
 
-        <div id="playerHand" class="flex flex-1 flex-row justify-center gap-2">
+        <div
+          id="playerHand"
+          class="flex flex-1 flex-row justify-center gap-2 bg-sky-500"
+        >
           {gameState.playerHand.map((card) => (
             <PlayableCard
               key={card}

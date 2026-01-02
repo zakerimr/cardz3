@@ -11,7 +11,7 @@ export default function PlayableCard({
       src={getImgFromCardString(faceUp, cardString)}
       onClick={() => onToggle(cardString)}
       class={
-        "cursor-pointer rounded-lg h-full shadow-md " +
+        "cursor-pointer rounded-lg shadow-md " +
         (selected ? "outline-3 outline-red-500 " : "")
       }
     >

@@ -5,7 +5,7 @@
 
 import { getValue, getColor, getCombos } from "./util.js";
 
-/** @import {stateObj, actionObj} from "./typedefs.js"*/
+/** @import {stateObj, actionObj, optionSet} from "./typedefs.js"*/
 
 /**
  * Removes card from the player's hand, replacing it with a new card from playerDeck if possible.
@@ -60,11 +60,12 @@ const replaceEnemyCard = (gameState) => {
  * @param {stateObj} gameState - The gameState object containing playerDeck, enemyCard, etc.
  */
 export const doAction = (action, card, gameState) => {
-  let eligibleCards = action.cards;
+  /** @type {optionSet} */
+  let opts = action.opts;
 
   switch (action.type) {
     case "BUILD": {
-      if (!eligibleCards || !eligibleCards.includes(card)) {
+      if (!opts || !opts.singles.includes(card)) {
         console.log(`Cannot build ${card} - tower must be ascending!`);
       } else {
         console.log(`Built card ${card}`);
@@ -75,7 +76,7 @@ export const doAction = (action, card, gameState) => {
     }
 
     case "SWAP": {
-      if (!eligibleCards || !eligibleCards.includes(card)) {
+      if (!opts || !opts.singles.includes(card)) {
         console.log("Could not swap this card!");
       } else {
         console.log(`Swapped card ${card}.`);
@@ -88,7 +89,7 @@ export const doAction = (action, card, gameState) => {
     case "KILL": {
       let topTower = gameState.tower.at(-1);
 
-      if (!eligibleCards || !eligibleCards.includes(card)) {
+      if (!opts || !opts.singles.includes(card)) {
         console.log(`Could not kill enemy ${gameState.enemyCard} with ${card}`);
       } else {
         console.log(`Killed enemy ${gameState.enemyCard} with ${card}.`);
@@ -146,15 +147,15 @@ export const doAction = (action, card, gameState) => {
  * For complex actions like KILL, this is a two-item array, e.g., ['KILL', ['9S', 'KC']]
  */
 export const getActions = (gameState) => {
+  /** @type {Array<actionObj>} */
   let actions = new Set();
 
   if (!gameState.enemyCard) {
-    // Perhaps we could throw an error here
     return actions;
   }
 
   if (gameState.playerDeck.length > 0) {
-    actions.add({ type: "DRAW", cards: [] });
+    actions.add({ type: "DRAW", opts: null });
   }
 
   const towerSize = gameState.tower.length;
@@ -165,10 +166,11 @@ export const getActions = (gameState) => {
       (card) => getValue(card) > getValue(gameState.tower.at(-1)),
     );
 
-    // console.log(`Buildable cards: ${buildableCards}`);
-
     if (buildableCards.length > 0) {
-      actions.add({ type: "BUILD", cards: buildableCards });
+      actions.add({
+        type: "BUILD",
+        opts: { singles: buildableCards, combos: [] },
+      });
     }
   }
 
@@ -202,20 +204,25 @@ export const getActions = (gameState) => {
     return total >= enemyValue;
   });
 
-  const stringifiedCombos = combos.map((c) => c.join("+"));
+  /** @type {optionSet} */
+  const killOptions = { singles: eligibleCards, combos: combos };
 
-  const killOptions = eligibleCards.concat(stringifiedCombos);
-
-  if (killOptions.length > 0) {
-    actions.add({ type: "KILL", cards: killOptions });
+  if (eligibleCards.length > 0 || combos.length > 0) {
+    actions.add({ type: "KILL", opts: { killOptions } });
   }
 
   if (towerSize > 0) {
-    actions.add({ type: "NUKE", cards: [] });
+    actions.add({ type: "NUKE", opts: null });
   }
 
   if (gameState.playerDeck.length > 0) {
-    actions.add({ type: "SWAP", cards: [...gameState.playerHand] });
+    /** @type {optionSet} */
+    const swappableCards = { singles: [...gameState.playerHand], combos: [] };
+
+    actions.add({
+      type: "SWAP",
+      opts: swappableCards,
+    });
   }
 
   return actions;

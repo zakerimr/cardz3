@@ -17,12 +17,11 @@ export default function DisplayCard({
     const relevantAction = actions.find((a) => a.type === action);
 
     if (relevantAction) {
-      let multiselect = false;
-      if (sc.length > 1) multiselect = true;
+      console.log("passing in as opts: ", relevantAction.opts);
 
       doAction(
-        { type: action, cards: relevantAction.cards },
-        multiselect ? sc.join("+") : sc,
+        { type: action, cards: relevantAction.opts },
+        sc.length > 1 ? sc.join("+") : sc[0],
         gameState,
       );
     }
