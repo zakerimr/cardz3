@@ -8,47 +8,58 @@ import { getValue, getColor, getCombos } from "./util.js";
 /** @import {stateObj, actionObj, optionSet} from "./typedefs.js"*/
 
 /**
- * Removes card from the player's hand, replacing it with a new card from playerDeck if possible.
- * @param {string} card The two-character card descriptor.
- * @param {stateObj} gameState The gameState object.
+ * Removes card(s) from the player's hand and draws replacements if possible.
+ * Supports additive cards like "2H+3H".
+ * @param {string} card
+ * @param {stateObj} state
+ * @returns {stateObj}
  */
-const removeFromHand = (card, gameState) => {
-  // Recursively additives
-  if (card.includes("+")) {
-    card.split("+").forEach((c) => removeFromHand(c, gameState));
-    return;
+export const removeFromHand = (card, state) => {
+  let next = structuredClone(state);
+
+  const cardsToRemove = card.includes("+") ? card.split("+") : [card];
+
+  for (const c of cardsToRemove) {
+    const index = next.playerHand.indexOf(c);
+
+    if (index === -1) {
+      throw new Error(`Tried to remove card not in hand: ${c}`);
+    }
+
+    next.playerHand.splice(index, 1);
+
+    if (next.playerDeck.length > 0) {
+      next.playerHand.push(next.playerDeck.pop());
+    }
   }
 
-  console.log(`Card: ${card}`);
-  let index = gameState.playerHand.indexOf(card);
-
-  if (index === -1) {
-    throw new Error(`Tried to remove card not in hand: ${card}`);
-  }
-
-  gameState.playerHand.splice(index, 1);
-
-  if (gameState.playerDeck.length > 0) {
-    gameState.playerHand.push(gameState.playerDeck.pop());
-  }
+  return next;
 };
 
 /**
  * Removes the topmost card from the player's tower.
- * @param {stateObj} gameState - The gameState object.
+ * @param {stateObj} state
+ * @returns {stateObj}
  */
-const removeFromTower = (gameState) => {
-  gameState.tower.pop();
+export const removeFromTower = (state) => {
+  if (state.tower.length === 0) return state;
+
+  const next = structuredClone(state);
+  next.tower.pop();
+  return next;
 };
 
 /**
- * Discards the enemy's upcard, replacing it with a new card if possible.
- * @param {stateObj} gameState The gameState object.
+ * Discards the enemy upcard and replaces it if possible.
+ * @param {stateObj} state
+ * @returns {stateObj}
  */
-const replaceEnemyCard = (gameState) => {
-  if (gameState.enemyDeck.length > 0) {
-    gameState.enemyCard = gameState.enemyDeck.pop();
-  }
+export const replaceEnemyCard = (state) => {
+  if (state.enemyDeck.length === 0) return state;
+
+  const next = structuredClone(state);
+  next.enemyCard = next.enemyDeck.pop();
+  return next;
 };
 
 /**
@@ -56,87 +67,106 @@ const replaceEnemyCard = (gameState) => {
  * If the action is valid, directly mutates the gameState object.
  * If the action is invalid, returns an informative console.log.
  * @param {actionObj} action - The action object, e.g. {type: 'BUILD', cards: ['2D', KH']
- * @param {string} card - The two-character card descriptor, e.g., 'TH', '8S'
+ * @param {Array<string>} cards - Array of two-character card descriptor, e.g., ['TH', '8S']
  * @param {stateObj} gameState - The gameState object containing playerDeck, enemyCard, etc.
  */
-export const doAction = (action, card, gameState) => {
-  /** @type {optionSet} */
-  let opts = action.opts;
+
+export const doAction = (action, cards, gameState) => {
+  // Clone once at the reducer boundary
+  let state = structuredClone(gameState);
+
+  const { singles = [], combos = [] } = action.opts ?? {};
+  const isCombo = cards.length > 1;
 
   switch (action.type) {
     case "BUILD": {
-      if (!opts || !opts.singles.includes(card)) {
-        console.log(`Cannot build ${card} - tower must be ascending!`);
-      } else {
-        console.log(`Built card ${card}`);
-        removeFromHand(card, gameState);
-        gameState.tower.push(card);
-      }
-      break;
+      if (isCombo) return state;
+
+      const card = cards[0];
+      if (!singles.includes(card)) return state;
+
+      state = removeFromHand(card, state);
+      state.tower.push(card);
+
+      return state;
     }
 
     case "SWAP": {
-      if (!opts || !opts.singles.includes(card)) {
-        console.log("Could not swap this card!");
-      } else {
-        console.log(`Swapped card ${card}.`);
-        removeFromHand(card, gameState);
-        gameState.enemyDeck.unshift(card);
-      }
-      break;
+      if (isCombo) return state;
+
+      const card = cards[0];
+      if (!singles.includes(card)) return state;
+
+      state = removeFromHand(card, state);
+      state.enemyDeck.unshift(card);
+
+      return state;
     }
 
     case "KILL": {
-      let topTower = gameState.tower.at(-1);
+      const topTower = state.tower.at(-1);
 
-      if (!opts || !opts.singles.includes(card)) {
-        console.log(`Could not kill enemy ${gameState.enemyCard} with ${card}`);
-      } else {
-        console.log(`Killed enemy ${gameState.enemyCard} with ${card}.`);
+      // ----- Single-card kill -----
+      if (!isCombo) {
+        const card = cards[0];
+        if (!singles.includes(card)) return state;
 
         if (card === topTower) {
-          removeFromTower(gameState);
+          state = removeFromTower(state);
         } else {
-          removeFromHand(card, gameState);
+          state = removeFromHand(card, state);
         }
 
-        replaceEnemyCard(gameState);
+        state = replaceEnemyCard(state);
+        return state;
       }
-      break;
+
+      // ----- Combo kill -----
+      const validCombo = combos.some(
+        (combo) =>
+          combo.length === cards.length &&
+          combo.every((c) => cards.includes(c)),
+      );
+
+      if (!validCombo) return state;
+
+      for (const card of cards) {
+        state = removeFromHand(card, state);
+      }
+
+      state = replaceEnemyCard(state);
+      return state;
     }
 
     case "DRAW": {
-      const newCard = gameState.playerDeck.pop();
-      const bonus = Math.floor(gameState.tower.length / 2);
+      if (state.playerDeck.length === 0) return state;
+
+      const newCard = state.playerDeck.pop();
+      const bonus = Math.floor(state.tower.length / 2);
+
       if (
-        getValue(newCard) + bonus >= getValue(gameState.enemyCard) &&
-        getColor(newCard) === getColor(gameState.enemyCard)
+        getValue(newCard) + bonus >= getValue(state.enemyCard) &&
+        getColor(newCard) === getColor(state.enemyCard)
       ) {
-        replaceEnemyCard(gameState);
-        console.log(`SUCCESS! Beat enemy card with ${newCard}`);
-      } else {
-        if (gameState.tower.length > 1) {
-          removeFromTower(gameState);
-        }
-        console.log(`FAILURE! ${newCard} discarded.`);
+        state = replaceEnemyCard(state);
+      } else if (state.tower.length > 1) {
+        state = removeFromTower(state);
       }
 
-      break;
+      return state;
     }
 
     case "NUKE": {
-      if (gameState.tower.length <= 0) {
-        throw new Error("Attempted nuke, but no tower found!");
-      }
-      gameState.tower = [];
-      replaceEnemyCard(gameState);
-      console.log("Nuked the tower!");
-      break;
+      if (state.tower.length === 0) return state;
+
+      state.tower = [];
+      state = replaceEnemyCard(state);
+
+      return state;
     }
 
-    default: {
-      throw new Error("Invalid action specified! " + action.type);
-    }
+    default:
+      return state;
   }
 };
 
@@ -208,7 +238,7 @@ export const getActions = (gameState) => {
   const killOptions = { singles: eligibleCards, combos: combos };
 
   if (eligibleCards.length > 0 || combos.length > 0) {
-    actions.add({ type: "KILL", opts: { killOptions } });
+    actions.add({ type: "KILL", opts: killOptions });
   }
 
   if (towerSize > 0) {

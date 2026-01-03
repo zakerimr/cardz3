@@ -10,3 +10,22 @@ body {
   padding: 2rem;
   height: 100%;
 }
+
+@keyframes hand-to-enemy {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    z-index: 10;
+  }
+  50% {
+    transform: translate(200px, -100px) rotate(15deg);
+    z-index: 20;
+  }
+  100% {
+    transform: translate(500px, -500px) rotate(90deg);
+    opacity: 0;
+  }
+}
+
+.animate-hand-to-enemy {
+  animation: hand-to-enemy 0.7s forwards;
+}

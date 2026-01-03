@@ -1,42 +1,31 @@
+import { useContext } from "preact/hooks";
 import { getImgFromCardString } from "../ui/util";
-import { doAction, getActions } from "../engine/action";
+import { GameContext } from "../ui/GameContext";
+import { getActions } from "../engine/action";
 
-export default function DisplayCard({
-  faceUp,
-  selectedCards,
-  action,
-  gameState,
-  cardString = "", // cosmetic, do not use in logic
-}) {
-  const sc = [...selectedCards];
+export default function DisplayCard({ faceUp, cardString = "", action }) {
+  const { state, dispatch } = useContext(GameContext);
+
+  const selectedCards = state.selectedCards;
 
   const handleClick = () => {
-    if (sc.length <= 0) return;
+    if (selectedCards.size === 0) return;
 
-    const actions = [...getActions(gameState)];
+    const actions = [...getActions(state)];
     const relevantAction = actions.find((a) => a.type === action);
+    if (!relevantAction) return;
 
-    if (relevantAction) {
-      console.log("passing in as opts: ", relevantAction.opts);
-
-      doAction(
-        { type: action, cards: relevantAction.opts },
-        sc.length > 1 ? sc.join("+") : sc[0],
-        gameState,
-      );
-    }
+    dispatch({
+      type: "PERFORM_ACTION",
+      payload: { gameAction: relevantAction, selectedCards },
+    });
   };
 
   return (
     <img
       src={getImgFromCardString(faceUp, cardString)}
       onClick={handleClick}
-      class={
-        "rounded-lg h-full shadow-md " +
-        (sc.length > 0 ? "cursor-pointer " : "")
-      }
-    >
-      {cardString}
-    </img>
+      class="rounded-lg h-full shadow-md cursor-pointer relative"
+    />
   );
 }
